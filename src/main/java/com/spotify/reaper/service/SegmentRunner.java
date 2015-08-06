@@ -32,6 +32,8 @@ import org.apache.cassandra.service.ActiveRepairService;
 import org.apache.cassandra.utils.SimpleCondition;
 import org.apache.commons.lang3.concurrent.ConcurrentException;
 import org.apache.commons.lang3.concurrent.LazyInitializer;
+
+
 import org.joda.time.DateTime;
 import org.joda.time.Seconds;
 import org.slf4j.Logger;
@@ -145,7 +147,7 @@ public final class SegmentRunner implements RepairStatusHandler, Runnable {
     LOG.debug("Run repair for segment #{}", segmentId);
     final RepairSegment segment = context.storage.getRepairSegment(segmentId).get();
     try (JmxProxy coordinator = context.jmxConnectionFactory
-        .connectAny(Optional.<RepairStatusHandler>of(this), potentialCoordinators)) {
+            .connectAny(Optional.<RepairStatusHandler>of(this), potentialCoordinators)) {
 
       if (segmentRunners.containsKey(segmentId)) {
         LOG.error("SegmentRunner already exists for segment with ID: " + segmentId);
@@ -188,7 +190,7 @@ public final class SegmentRunner implements RepairStatusHandler, Runnable {
           //  return 0;
           LOG.info("Nothing to repair for keyspace {}", keyspace);
           context.storage.updateRepairSegment(segment.with()
-              .coordinatorHost(coordinator.getHost())
+                  .coordinatorHost(coordinator.getHost())
               .state(RepairSegment.State.DONE)
               .build(segmentId));
           segmentRunners.remove(segment.getId());
@@ -348,7 +350,7 @@ public final class SegmentRunner implements RepairStatusHandler, Runnable {
               segmentId, repairNumber);
           context.storage.updateRepairSegment(currentSegment.with()
               .state(RepairSegment.State.DONE)
-              .endTime(DateTime.now())
+                  .endTime(DateTime.now())
               .build(segmentId));
           break;
 

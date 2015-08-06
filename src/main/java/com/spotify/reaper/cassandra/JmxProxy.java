@@ -20,7 +20,6 @@ import com.google.common.collect.Lists;
 import com.spotify.reaper.ReaperException;
 import com.spotify.reaper.core.Cluster;
 import com.spotify.reaper.service.RingRange;
-
 import org.apache.cassandra.db.ColumnFamilyStoreMBean;
 import org.apache.cassandra.db.compaction.CompactionManager;
 import org.apache.cassandra.db.compaction.CompactionManagerMBean;
@@ -30,30 +29,15 @@ import org.apache.cassandra.service.StorageServiceMBean;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
-import java.math.BigInteger;
-import java.net.MalformedURLException;
-import java.util.AbstractMap;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
-import javax.management.InstanceNotFoundException;
-import javax.management.JMX;
-import javax.management.ListenerNotFoundException;
-import javax.management.MBeanServerConnection;
-import javax.management.MalformedObjectNameException;
-import javax.management.Notification;
-import javax.management.NotificationListener;
-import javax.management.ObjectName;
+import javax.management.*;
 import javax.management.remote.JMXConnector;
 import javax.management.remote.JMXConnectorFactory;
 import javax.management.remote.JMXServiceURL;
 import javax.validation.constraints.NotNull;
+import java.io.IOException;
+import java.math.BigInteger;
+import java.net.MalformedURLException;
+import java.util.*;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -66,6 +50,8 @@ public class JmxProxy implements NotificationListener, AutoCloseable {
   private static final String SS_OBJECT_NAME = "org.apache.cassandra.db:type=StorageService";
   private static final String AES_OBJECT_NAME =
       "org.apache.cassandra.internal:type=AntiEntropySessions";
+  private static final boolean FULL_REPAIR = true;  // DO full repair of an incremental only fine when doing an none sequential repair
+  private static final boolean INCREMENTAL_REPAIR = false;
 
   private final JMXConnector jmxConnector;
   private final ObjectName ssMbeanName;
@@ -349,9 +335,8 @@ public class JmxProxy implements NotificationListener, AutoCloseable {
     if (repairParallelism.equals(RepairParallelism.DATACENTER_AWARE)) {
       if (canUseDatacenterAware) {
         return ssProxy.forceRepairRangeAsync(beginToken.toString(), endToken.toString(), keyspace,
-            repairParallelism.ordinal(), null, null,
-            columnFamilies
-                .toArray(new String[columnFamilies.size()]));
+                                             repairParallelism.ordinal(), null, null, FULL_REPAIR,
+                                             columnFamilies.toArray(new String[columnFamilies.size()]));
       } else {
         LOG.info("Cannot use DATACENTER_AWARE repair policy for Cassandra cluster with version {},"
                  + " falling back to SEQUENTIAL repair.",
@@ -361,8 +346,8 @@ public class JmxProxy implements NotificationListener, AutoCloseable {
     }
     boolean snapshotRepair = repairParallelism.equals(RepairParallelism.SEQUENTIAL);
     return ssProxy.forceRepairRangeAsync(beginToken.toString(), endToken.toString(), keyspace,
-        snapshotRepair, false,
-        columnFamilies.toArray(new String[columnFamilies.size()]));
+                                         snapshotRepair, false, FULL_REPAIR,
+                                         columnFamilies.toArray(new String[columnFamilies.size()]));
   }
 
   /**
