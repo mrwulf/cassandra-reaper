@@ -29,7 +29,7 @@ import com.sun.management.UnixOperatingSystemMXBean;
 
 import org.apache.cassandra.repair.RepairParallelism;
 import org.apache.cassandra.service.ActiveRepairService;
-import org.apache.cassandra.utils.SimpleCondition;
+import com.spotify.reaper.utils.SimpleCondition;
 import org.apache.commons.lang3.concurrent.ConcurrentException;
 import org.apache.commons.lang3.concurrent.LazyInitializer;
 
